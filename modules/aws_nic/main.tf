@@ -1,1 +1,6 @@
-
+#In aws_nic for main.tf
+resource "aws_network_interface" "foo" {
+  subnet_id   = var.subnet_id
+  private_ips = var.private_ips
+  tags = var.nic_name
+}
