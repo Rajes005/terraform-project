@@ -1,65 +1,30 @@
-provider "aws" {
-  # Configuration options
-  region = "us-west-2"
+#In main.tf
+module "vpc" {
+  source = "./modules/aws_vpc"
+  vpc_cidr = var.vpc_cidr
+  vpc_name = var.vpc_name
 }
-resource "aws_vpc" "my_vpc" {
-  cidr_block = "172.16.0.0/16"
-  tags = {
-    Name = "Default VPC"
-  }
+module "subnet" {
+  source = "./modules/aws_subnet"
+  vpc_id = module.vpc.vpc_id
+  cidr_block = var.cidr_block
+  subnet_name = var.subnet_name
 }
-resource "aws_subnet" "my_subnet" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "172.16.10.0/24"
-  availability_zone = "us-west-2a"
-
-  tags = {
-    Name = "Main"
-  }
+module "sg" {
+  source = "./modules/aws_sg"
+  vpc_id = module.vpc.vpc_id
+  sg_name = var.sg_name
 }
-resource "aws_security_group" "allow_tls" {
-  name        = "allow_tls"
-  description = "Allow TLS inbound traffic"
-  vpc_id      = aws_vpc.my_vpc.id
-
-  ingress {
-    description      = "TLS from VPC"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.my_vpc.cidr_block]
-    ipv6_cidr_blocks = [aws_vpc.my_vpc.ipv6_cidr_block]
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  tags = {
-    Name = "allow_tls"
-  }
+module "nic" {
+  source = "./modules/aws_nic"
+  subnet_id = module.subnet.subnet_id
+  private_ips = var.private_ips
+  nic_name = var.nic_name
 }
-resource "aws_network_interface" "foo" {
-  subnet_id   = aws_subnet.my_subnet.id
-  private_ips = ["172.16.10.100"]
-  tags = {
-    Name = "primary_network_interface"
-  }
-}
-resource "aws_instance" "foo" {
-  ami           = "ami-005e54dee72cc1d00" # us-west-2
-  instance_type = "t2.micro"
-
-  network_interface {
-    network_interface_id = aws_network_interface.foo.id
-    device_index         = 0
-  }
-
-  tags = {
-    Name = "PROD-SERVER"
-  }
+module "instance" {
+  source = "./modules/aws_instance"
+  instance_name = var.instance_name
+  instance_type = var.instance_type
+  instance_ami = var.instance_ami
+  nic_id = module.nic.nic_id
 }
