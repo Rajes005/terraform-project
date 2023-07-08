@@ -28,3 +28,13 @@ module "instance" {
   instance_ami = var.instance_ami
   nic_id = module.nic.nic_id
 }
+module "instance_east_1" {
+  source = "./modules/aws_instance"
+  providers = {
+    aws = aws.east-1
+  }
+  instance_name = var.instance_name
+  instance_type = var.instance_type
+  instance_ami = var.instance_ami
+  nic_id = module.nic.nic_id
+}
