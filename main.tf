@@ -48,6 +48,9 @@ module "nic" {
 }
 module "instance" {
   source        = "./modules/aws_instance"
+  depends_on = [
+    module.nic
+  ]
   for_each      = var.instance_config
   instance_name = each.value.instance_name
   instance_type = each.value.instance_type
